@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<title>EA 5: Kamerabewegung</title>
+
+<style>
+
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --soft: #f5f5f5;
+    --primary: #1a1a1a;
+    --primary-dark: #000000;
+    --primary-light: #ededed;
+    --accent: #2a2a2a;
+    --success: #2e7d32;
+    --success-bg: #e8f5e9;
+    --error: #c62828;
+    --error-bg: #ffebee;
+    --warn: #ef6c00;
+    --warn-bg: #fff3e0;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --border: #d4d4d4;
+    --border-strong: #1a1a1a;
+    --shadow: 0 1px 2px rgba(0,0,0,.05);
+    --shadow-lg: 0 2px 6px rgba(0,0,0,.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  header {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 2.5rem 1.5rem 2rem;
+    border-bottom: 1px solid #000;
+  }
+  header .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { margin: 0 0 .35rem; font-size: 1.85rem; font-weight: 600; }
+  header p { margin: 0; opacity: .92; font-size: 1rem; }
+  header .meta {
+    margin-top: 1rem; font-size: .85rem; opacity: .75;
+    display: flex; flex-wrap: wrap; gap: .25rem 1rem;
+  }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  section { margin-bottom: 3rem; }
+
+  h2 {
+    font-size: 1.35rem; margin: 0 0 1rem;
+    padding-bottom: .5rem; border-bottom: 1px solid var(--border);
+  }
+  h2 .num {
+    display: inline-block; background: #1a1a1a; color: #fff;
+    border-radius: 2px; padding: .15rem .55rem; margin-right: .55rem;
+    font-size: .85rem; vertical-align: middle; letter-spacing: .03em;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid #1a1a1a;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 1rem 1.1rem 1.1rem;
+    margin-bottom: 1.25rem;
+  }
+  .card h4 { margin: 0 0 .35rem; font-size: .95rem; font-weight: 600; }
+  .card .sub { font-size: .82rem; color: var(--text-muted); margin: 0 0 .65rem; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+  .btn {
+    display: inline-block; padding: .5rem 1rem;
+    background: #1a1a1a; color: #fff;
+    border: 1px solid #1a1a1a; border-radius: 2px;
+    font-size: .9rem; font-weight: 500; cursor: pointer;
+    transition: background .15s, color .15s;
+    font-family: inherit;
+  }
+  .btn:hover, .btn.is-pressed { background: #fff; color: #1a1a1a; }
+  .btn:focus-visible { outline: 2px solid #1a1a1a; outline-offset: 2px; }
+  .btn:disabled { background: #fff; color: var(--text-muted); border-color: var(--border); cursor: not-allowed; }
+  .btn.secondary { background: #fff; color: #1a1a1a; }
+  .btn.secondary:hover, .btn.secondary.is-pressed { background: #1a1a1a; color: #fff; }
+  .btn kbd { margin-left: .35rem; }
+
+  .global-status {
+    background: var(--soft); color: var(--text);
+    border-left: 3px solid #1a1a1a;
+    padding: .65rem 1rem; border-radius: 0;
+    font-size: .9rem; margin-bottom: 1.25rem;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .global-status.is-ready { background: var(--success-bg); border-left-color: var(--success); }
+  .global-status.is-error { background: var(--error-bg); border-left-color: var(--error); color: var(--error); }
+  .global-status.is-warn  { background: var(--warn-bg);  border-left-color: var(--warn); }
+
+  .statline {
+    display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; margin: 0 0 1rem;
+    font-size: .9rem; font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .statline b { font-weight: 600; }
+
+  /* Zeichenfläche für WebGL */
+  .canvas-frame {
+    background: var(--soft); border: 1px solid var(--border); border-radius: 4px;
+    padding: .5rem; margin-bottom: 1rem;
+  }
+  .canvas-frame canvas {
+    display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+    border-radius: 2px; background: #1f262f;
+  }
+  .prose h3 { font-size: 1.05rem; margin: 1.4rem 0 .5rem; }
+  .prose h3:first-child { margin-top: 0; }
+  .prose table.key-table td:first-child { width: auto; }
+  .prose table.key-table td { white-space: normal; overflow-wrap: anywhere; }
+  .prose table.key-table th { overflow-wrap: anywhere; }
+
+  .prose { max-width: 740px; }
+  .prose p { margin: 0 0 .75rem; }
+  .prose ul { padding-left: 1.4rem; margin: 0 0 1rem; }
+  .prose li { margin-bottom: .35rem; }
+  .prose a { color: #1a1a1a; text-decoration-thickness: 1px; }
+  .prose a:hover { text-decoration-thickness: 2px; }
+  .prose code { background: var(--soft); padding: 0 .3rem; border-radius: 3px; font-size: .9em; }
+
+  table.key-table { border-collapse: collapse; margin: .5rem 0 1rem; font-size: .9rem; width: 100%; }
+  table.key-table th, table.key-table td { border: 1px solid var(--border); padding: .4rem .7rem; text-align: left; }
+  table.key-table th { background: var(--soft); font-weight: 600; }
+  table.key-table td:first-child { white-space: nowrap; width: 1%; }
+
+  kbd {
+    display: inline-block; padding: .05rem .35rem; background: var(--soft);
+    border: 1px solid var(--border); border-radius: 3px; font-size: .78rem; color: var(--text);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  footer { border-top: 1px solid var(--border); padding-top: 1.5rem; font-size: .85rem; color: var(--text-muted); }
+
+  @media (max-width: 720px) {
+    header h1 { font-size: 1.5rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+  }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+  /* Kontextsensitive Hilfe (ISO 9241-110) */
+  .help { position: relative; display: inline-block; margin-left: .5rem; vertical-align: middle; }
+  .help-btn {
+    width: 1.4rem; height: 1.4rem; padding: 0;
+    border: 1px solid var(--border-strong); background: #fff; color: var(--text);
+    border-radius: 50%; font-size: .8rem; font-weight: 600; cursor: help; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .help-btn:hover, .help-btn:focus-visible { background: var(--text); color: #fff; outline: none; }
+  .help-popover {
+    display: none; position: absolute; top: calc(100% + .35rem); left: 50%; transform: translateX(-50%);
+    width: min(360px, 80vw); background: #fff; color: var(--text);
+    border: 1px solid var(--border-strong); border-radius: 4px;
+    padding: .7rem .85rem; font-size: .85rem; line-height: 1.45;
+    box-shadow: var(--shadow-lg); z-index: 10; text-align: left; font-weight: normal;
+  }
+  .help-popover::before {
+    content: ""; position: absolute; top: -7px; left: 50%; transform: translateX(-50%) rotate(45deg);
+    width: 12px; height: 12px; background: #fff;
+    border-left: 1px solid var(--border-strong); border-top: 1px solid var(--border-strong);
+  }
+  .help.is-open .help-popover { display: block; }
+  .help-popover h4 { margin: 0 0 .35rem; font-size: .9rem; font-weight: 600; }
+  .help-popover p { margin: 0 0 .35rem; }
+  .help-popover p:last-child { margin-bottom: 0; }
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>EA 5: Kamerabewegung</h1>
+    <p>Eine Szene aus Grundkörpern mit einer Kamera, die über die Pfeiltasten auf einer Kreisbahn um die Y-Achse kreist. In der Mitte steht ein rekursiv aufgebautes Kugelmodell, dessen Rekursionstiefe sich einstellen lässt.</p>
+    <div class="meta">
+      <span>Hamid Mergan</span>
+      <span>TH Lübeck</span>
+      <span>Modul Graphical Visualisation Technologies</span>
+      <span>Wintersemester 2026/27</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div id="globalStatus" class="global-status" role="status" aria-live="polite">Initialisiere WebGL …</div>
+
+  <!-- A1 Szene -->
+  <section aria-labelledby="a1">
+    <h2 id="a1"><span class="num">A1</span>Szene mit kreisender Kamera
+      <span class="help">
+        <button type="button" class="help-btn" aria-label="Hilfe zu A1" aria-expanded="false">?</button>
+        <span class="help-popover" role="tooltip">
+          <h4>So bewegst du die Kamera</h4>
+          <p><kbd>←</kbd> und <kbd>→</kbd> lassen die Kamera um die Szene kreisen. Gedrückthalten bewegt sie weiter.</p>
+          <p><kbd>N</kbd> vergrößert den Radius der Kreisbahn, <kbd>Shift</kbd>+<kbd>N</kbd> verkleinert ihn. Die Buttons unter dem Bild leisten dasselbe.</p>
+        </span>
+      </span>
+    </h2>
+
+    <div class="card">
+      <h4>Szene</h4>
+      <p class="sub">Kugel, Torus, Zylinder, Kegel und Quader auf einer Bodenplatte, mit Perspektivprojektion und Tiefentest.</p>
+      <div class="canvas-frame">
+        <canvas id="glCanvas" width="1280" height="720" aria-label="3D-Szene mit Kugel, Torus, Zylinder, Kegel und Quader"></canvas>
+      </div>
+      <div class="statline" aria-label="Zustand der Kamera">
+        <span><b>Winkel:</b> <span id="infoAngle">…</span></span>
+        <span><b>Radius:</b> <span id="infoRadius">…</span></span>
+        <span><b>Höhe:</b> <span id="infoHeight">…</span></span>
+      </div>
+      <div class="toolbar" role="group" aria-label="Kamera">
+        <button id="btnLeft" class="btn secondary" type="button" disabled>◀ Links<kbd>←</kbd></button>
+        <button id="btnRight" class="btn secondary" type="button" disabled>Rechts ▶<kbd>→</kbd></button>
+        <button id="btnRadiusUp" class="btn" type="button" disabled>Radius größer<kbd>N</kbd></button>
+        <button id="btnRadiusDown" class="btn" type="button" disabled>Radius kleiner<kbd>Shift+N</kbd></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Rekursive Kugel</h4>
+      <p class="sub">Start mit dem Oktaeder, in jedem Schritt wird jedes Dreieck in vier Dreiecke geteilt.</p>
+      <div class="statline" aria-label="Zustand der Kugel">
+        <span><b>Tiefe:</b> <span id="infoDepth">…</span></span>
+        <span><b>Dreiecke:</b> <span id="infoTris">…</span></span>
+        <span><b>Vertices:</b> <span id="infoVerts">…</span></span>
+        <span><b>Indexformat:</b> <span id="infoIndex">…</span></span>
+      </div>
+      <div class="toolbar" role="group" aria-label="Rekursionstiefe">
+        <button id="btnDepthDown" class="btn secondary" type="button" disabled aria-label="Rekursionstiefe verringern">− Tiefe</button>
+        <button id="btnDepthUp" class="btn secondary" type="button" disabled aria-label="Rekursionstiefe erhöhen">+ Tiefe</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2 Bedienung -->
+  <section aria-labelledby="a2">
+    <h2 id="a2"><span class="num">A2</span>Bedienung
+      <span class="help">
+        <button type="button" class="help-btn" aria-label="Hilfe zu A2" aria-expanded="false">?</button>
+        <span class="help-popover" role="tooltip">
+          <h4>Tastatur oder Maus</h4>
+          <p>Jede Kamerataste hat einen Button. Die Pfeil-Buttons bewegen die Kamera, solange sie gedrückt sind. Beim Tastendruck leuchtet der zugehörige Button auf.</p>
+        </span>
+      </span>
+    </h2>
+    <table class="key-table">
+      <thead><tr><th>Taste</th><th>Wirkung</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>←</kbd></td><td>Kamera auf der Kreisbahn nach links bewegen (Gedrückthalten wiederholt)</td></tr>
+        <tr><td><kbd>→</kbd></td><td>Kamera auf der Kreisbahn nach rechts bewegen (Gedrückthalten wiederholt)</td></tr>
+        <tr><td><kbd>N</kbd></td><td>Radius der Kreisbahn vergrößern</td></tr>
+        <tr><td><kbd>Shift</kbd>+<kbd>N</kbd></td><td>Radius der Kreisbahn verkleinern</td></tr>
+        <tr><td>Button <b>+ Tiefe</b></td><td>Rekursionstiefe der Kugel um 1 erhöhen</td></tr>
+        <tr><td>Button <b>− Tiefe</b></td><td>Rekursionstiefe der Kugel um 1 verringern</td></tr>
+      </tbody>
+    </table>
+    <div class="prose">
+      <p>Pfeil nach oben und unten sind nicht belegt. Tastenkombinationen mit Strg, Cmd oder Alt werden nicht abgefangen.</p>
+      <ul>
+        <li><b>Selbstbeschreibungsfähigkeit:</b> Die Statuszeilen zeigen Winkel, Radius, Höhe, Tiefe und Größe der Kugel. Die Buttons nennen ihre Taste.</li>
+        <li><b>Fehlertoleranz:</b> Der Radius ist auf 8 bis 20 begrenzt, die Rekursionstiefe auf 0 bis <span id="infoMaxDepth">…</span>. An den Grenzen sind die Buttons gesperrt, die Statuszeile erklärt den Grund.</li>
+        <li><b>Gebrauchstauglichkeit:</b> Die Seite ist auch bei schmaler Breite bedienbar, der Tastaturfokus ist sichtbar.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- A3 Dokumentation -->
+  <section aria-labelledby="a3">
+    <h2 id="a3"><span class="num">A3</span>Dokumentation
+      <span class="help">
+        <button type="button" class="help-btn" aria-label="Hilfe zu A3" aria-expanded="false">?</button>
+        <span class="help-popover" role="tooltip">
+          <h4>Inhalt</h4>
+          <p>Mathematik der Kamerabahn, Aufbau der Szene und der rekursiven Kugel mit den Anzahlen je Tiefe.</p>
+        </span>
+      </span>
+    </h2>
+    <div class="prose">
+      <h3>Kamerabahn</h3>
+      <p>Die Kamera kreist in der XZ-Ebene um das Zentrum <code>center = (0, 0, 0)</code>. Mit dem Winkel <code>zAngle</code> zur Z-Achse und dem Radius <code>distance</code> gilt für die Position:</p>
+      <p><code>eye = ( center.x + distance * sin(zAngle), height, center.z + distance * cos(zAngle) )</code></p>
+      <p>Die Höhe <code>height</code> ist konstant (3,6) und unabhängig vom Radius. Die View-Matrix entsteht mit <code>lookAt(eye, center, up)</code> und <code>up = (0, 1, 0)</code>. Da die Kamera nie senkrecht über dem Zentrum steht (der Blickvektor ist nie parallel zu <code>up</code>), bleibt der Up-Vektor senkrecht zum Objektiv und das Bild kippt nie. Die Matrix wird aus Blickrichtung <code>f</code>, Seitenvektor <code>s = f × up</code> und Oberseite <code>u = s × f</code> aufgebaut.</p>
+      <p>Der Radius wird mit <code>N</code> in Schritten von 1 verändert und auf 8 bis 20 begrenzt. Die äußersten Körper (Torus, Quader) reichen höchstens 6,2 Einheiten vom Zentrum weg. Die Kamera bleibt daher mit Abstand außerhalb aller Körper und über der Bodenplatte, auch beim kleinsten Radius. Bei Radius 20 liegt die Szene noch vollständig im Bild und innerhalb der Far-Plane (60).</p>
+      <h3>Szene</h3>
+      <p>Alle Körper sind aus Vertex-, Normalen-, Color- und Index-Arrays aufgebaut (parametrisierte Flächen und Polygone): Torus, Zylinder und Kegel (Mantel und Deckel getrennt, damit die Normalen an den Kanten stimmen), ein Quader aus sechs Seiten und die Bodenplatte als Schachbrett. Beleuchtet wird mit einer festen Richtung im Weltkoordinatensystem (Ambient plus Lambert-Anteil), sodass sich das Licht beim Kreisen mit der Szene dreht. Die Projektion ist eine Perspektive mit 45° Öffnungswinkel, der Tiefentest ist aktiv.</p>
+      <h3>Rekursive Kugel</h3>
+      <p>Seed ist ein Oktaeder mit 6 Eckpunkten auf der Einheitskugel und 8 Dreiecken. Jedes Dreieck wird rekursiv in vier Dreiecke geteilt: Die drei Kantenmittelpunkte werden berechnet und durch Normieren (Division durch die Länge) auf die Einheitskugel geschoben. Gemeinsame Kantenmittelpunkte benachbarter Dreiecke werden über eine Tabelle nur einmal angelegt, die Vertices werden also geteilt. Farben ergeben sich aus der Position (<code>rgb = 0,5 + 0,5 * p</code>), die Normale ist die Position selbst. Gezeichnet wird zuerst die gefüllte Fläche (mit Polygon-Offset), danach dieselben Kanten als <code>LINES</code> in dunkler Farbe. Die Linien sind also immer sichtbar, ein Umschalter ist nicht nötig.</p>
+      <p>Für die Tiefe <i>n</i> gilt: Dreiecke <i>A</i> = 8 * 4<sup><i>n</i></sup>, Vertices <i>V</i> = 4 * 4<sup><i>n</i></sup> + 2, Kanten <i>E</i> = 12 * 4<sup><i>n</i></sup>. Ab Tiefe 7 sind es mehr als 65535 Vertices. Das Format <code>UNSIGNED_SHORT</code> reicht dann nicht mehr, die Seite nutzt dafür <code>OES_element_index_uint</code> (<code>UNSIGNED_INT</code>) und prüft beim Start, ob die Erweiterung vorhanden ist. Ohne sie ist die Tiefe auf 6 begrenzt.</p>
+      <table class="key-table" id="countTable">
+        <thead><tr><th>Tiefe</th><th>Dreiecke</th><th>Vertices</th><th>Kanten</th><th>Indexformat</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- A4 Material -->
+  <section aria-labelledby="a4">
+    <h2 id="a4"><span class="num">A4</span>Material &amp; Quellen</h2>
+    <div class="prose">
+      <ul>
+        <li><b>Skript:</b> Lerneinheiten GRU (Grundkörper, rekursive Erzeugung von Geometrie) und KAP (kreisende LookAt-Kamera mit <code>calculateCameraOrbit</code>).</li>
+        <li><b>Links zum rekursiven Kugelmodell aus der Aufgabe:</b>
+          <ul>
+            <li><a href="http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html" rel="noopener">Andreas Kahler: Creating an icosphere mesh in code</a> (Idee, Mittelpunkte in einer Tabelle zu speichern und Vertices zu teilen)</li>
+            <li><a href="http://paulbourke.net/geometry/circlesphere/csource3.c" rel="noopener">Paul Bourke: Kugel durch Unterteilung (csource3.c)</a></li>
+            <li><a href="http://www.stephan-brumme.com/download/grafik/Computergrafik2.pdf" rel="noopener">Stephan Brumme: Computergrafik 2</a></li>
+            <li><a href="https://arxiv.org/ftp/cs/papers/0701/0701164.pdf" rel="noopener">arXiv cs/0701164</a></li>
+          </ul>
+          Umgesetzt ist der Aufbau aus dem Skript (Oktaeder als Seed), nicht der Ikosaeder aus dem ersten Link.</li>
+        <li><b>Fremdmaterial:</b> keines. Es werden keine externen Bibliotheken, Schriften oder Bilder verwendet. Matrizen und Geometrie sind selbst geschrieben.</li>
+        <li><b>Technik:</b> reines HTML, CSS und JavaScript mit rohem WebGL 1 (<code>getContext("webgl")</code>), GLSL ES 1.00. Die Darstellung wird nur bei Änderungen neu gezeichnet.</li>
+        <li><b>Quelltext:</b> die für diese Aufgabe geschriebenen Stellen sind mit <code>// START EA5_KAMERABEWEGUNG</code> und <code>// END EA5_KAMERABEWEGUNG</code> markiert.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Die Seite läuft vollständig im Browser. Es werden keine Daten an einen Server gesendet und nichts gespeichert.</p>
+  </footer>
+</main>
+
+<script>
+// START EA5_KAMERABEWEGUNG
+(function () {
+  "use strict";
+
+  // ---------- Konstanten ----------
+  const CANVAS_W = 1280, CANVAS_H = 720;
+  const CAM_HEIGHT = 3.6;            // Kamerahöhe Y, unabhängig vom Radius
+  const RADIUS_MIN = 8, RADIUS_MAX = 20, RADIUS_STEP = 1;
+  const TAP_STEP = 0.035;            // Schritt beim ersten Tastendruck, danach läuft die Bewegung zeitbasiert
+  const ANGLE_SPEED = 1.1;           // rad/s bei gedrückter Pfeiltaste
+  const GROUND_Y = -1.5;
+  const SPHERE_R = 1.5;
+  const DEPTH_START = 3;
+  const BG = [0.12, 0.15, 0.19];
+  const LINE_COLOR = [0.07, 0.08, 0.1];
+  // Deckkraft der Linien nach Tiefe: bei vielen Dreiecken werden sie dünner gezeichnet, sonst wirkt die Kugel schwarz
+  const LINE_ALPHA = [1, 1, 0.9, 0.85, 0.7, 0.45, 0.28, 0.16];
+
+  const statusEl = document.getElementById("globalStatus");
+  const canvas = document.getElementById("glCanvas");
+  const el = id => document.getElementById(id);
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "global-status" + (kind ? " is-" + kind : "");
+  }
+
+  // ---------- Vektor- und Matrixfunktionen (spaltenweise Speicherung) ----------
+  const vec3 = {
+    sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+    dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+    cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    normalize: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+  };
+
+  function mat4Identity() { return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; }
+  function mat4Translate(x, y, z) { const m = mat4Identity(); m[12] = x; m[13] = y; m[14] = z; return m; }
+  function mat4Scale(s) { const m = mat4Identity(); m[0] = m[5] = m[10] = s; return m; }
+  function mat4RotateY(a) {
+    const c = Math.cos(a), s = Math.sin(a), m = mat4Identity();
+    m[0] = c; m[2] = -s; m[8] = s; m[10] = c;
+    return m;
+  }
+  function mat4Multiply(a, b) { // a * b
+    const o = new Array(16);
+    for (let col = 0; col < 4; col++)
+      for (let row = 0; row < 4; row++) {
+        let s = 0;
+        for (let k = 0; k < 4; k++) s += a[k * 4 + row] * b[col * 4 + k];
+        o[col * 4 + row] = s;
+      }
+    return o;
+  }
+  function mat4Perspective(fovy, aspect, near, far) {
+    const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+    return [f / aspect,0,0,0, 0,f,0,0, 0,0,(far + near) * nf,-1, 0,0,2 * far * near * nf,0];
+  }
+  function mat4LookAt(eye, center, up) {
+    const f = vec3.normalize(vec3.sub(center, eye));
+    const s = vec3.normalize(vec3.cross(f, up));
+    const u = vec3.cross(s, f);
+    return [
+      s[0], u[0], -f[0], 0,
+      s[1], u[1], -f[1], 0,
+      s[2], u[2], -f[2], 0,
+      -vec3.dot(s, eye), -vec3.dot(u, eye), vec3.dot(f, eye), 1
+    ];
+  }
+
+  // ---------- WebGL ----------
+  const gl = canvas.getContext("webgl", { antialias: true });
+  if (!gl) {
+    setStatus("Fehler: WebGL wird von diesem Browser oder Gerät nicht unterstützt.", "error");
+    return;
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(CANVAS_W * dpr);
+  canvas.height = Math.round(CANVAS_H * dpr);
+
+  const uintExt = gl.getExtension("OES_element_index_uint");
+  const MAX_DEPTH = uintExt ? 7 : 6;
+  el("infoMaxDepth").textContent = MAX_DEPTH;
+
+  const VS = [
+    "attribute vec3 aPosition;",
+    "attribute vec3 aNormal;",
+    "attribute vec3 aColor;",
+    "uniform mat4 uModel;",
+    "uniform mat4 uView;",
+    "uniform mat4 uProj;",
+    "varying vec3 vNormal;",
+    "varying vec3 vColor;",
+    "void main() {",
+    "  vNormal = (uModel * vec4(aNormal, 0.0)).xyz;",
+    "  vColor = aColor;",
+    "  gl_Position = uProj * uView * uModel * vec4(aPosition, 1.0);",
+    "}"
+  ].join("\n");
+
+  const FS = [
+    "precision mediump float;",
+    "varying vec3 vNormal;",
+    "varying vec3 vColor;",
+    "uniform float uUnlit;",
+    "uniform vec3 uLineColor;",
+    "uniform float uLineAlpha;",
+    "const vec3 LIGHT = vec3(0.45, 0.8, 0.4);",
+    "void main() {",
+    "  if (uUnlit > 0.5) { gl_FragColor = vec4(uLineColor, uLineAlpha); return; }",
+    "  vec3 n = normalize(vNormal);",
+    "  float diff = max(dot(n, normalize(LIGHT)), 0.0);",
+    "  float sky = 0.5 + 0.5 * n.y;",
+    "  float k = 0.32 + 0.18 * sky + 0.62 * diff;",
+    "  gl_FragColor = vec4(vColor * k, 1.0);",
+    "}"
+  ].join("\n");
+
+  function compile(type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      throw new Error((type === gl.VERTEX_SHADER ? "Vertex-Shader: " : "Fragment-Shader: ") + gl.getShaderInfoLog(sh));
+    }
+    return sh;
+  }
+
+  let prog, loc;
+  try {
+    prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("Link-Fehler: " + gl.getProgramInfoLog(prog));
+  } catch (err) {
+    console.error(err);
+    setStatus("Fehler beim Erzeugen der Shader: " + err.message, "error");
+    return;
+  }
+  gl.useProgram(prog);
+  loc = {
+    aPosition: gl.getAttribLocation(prog, "aPosition"),
+    aNormal: gl.getAttribLocation(prog, "aNormal"),
+    aColor: gl.getAttribLocation(prog, "aColor"),
+    uModel: gl.getUniformLocation(prog, "uModel"),
+    uView: gl.getUniformLocation(prog, "uView"),
+    uProj: gl.getUniformLocation(prog, "uProj"),
+    uUnlit: gl.getUniformLocation(prog, "uUnlit"),
+    uLineColor: gl.getUniformLocation(prog, "uLineColor"),
+    uLineAlpha: gl.getUniformLocation(prog, "uLineAlpha")
+  };
+
+  // ---------- Geometrie: Hilfsfunktionen ----------
+  // Ein Mesh besteht aus Vertex-, Normalen-, Color- und Index-Array.
+  function newMesh() { return { pos: [], nor: [], col: [], idx: [] }; }
+  function addVertex(m, p, n, c) {
+    m.pos.push(p[0], p[1], p[2]);
+    m.nor.push(n[0], n[1], n[2]);
+    m.col.push(c[0], c[1], c[2]);
+    return m.pos.length / 3 - 1;
+  }
+
+  // parametrisierte Fläche: fn(u, v) liefert { p, n, c }, u und v laufen von 0 bis 1
+  function addSurface(m, fn, nu, nv) {
+    const base = m.pos.length / 3;
+    for (let j = 0; j <= nv; j++)
+      for (let i = 0; i <= nu; i++) {
+        const r = fn(i / nu, j / nv);
+        addVertex(m, r.p, r.n, r.c);
+      }
+    for (let j = 0; j < nv; j++)
+      for (let i = 0; i < nu; i++) {
+        const a = base + j * (nu + 1) + i, b = a + 1, c = a + (nu + 1), d = c + 1;
+        m.idx.push(a, c, b, b, c, d);
+      }
+  }
+
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  const TAU = Math.PI * 2;
+
+  function makeTorus(R, r, c1, c2) {
+    const m = newMesh();
+    addSurface(m, (u, v) => {
+      const a = u * TAU, b = v * TAU;
+      return {
+        p: [(R + r * Math.cos(b)) * Math.cos(a), r * Math.sin(b), (R + r * Math.cos(b)) * Math.sin(a)],
+        n: [Math.cos(b) * Math.cos(a), Math.sin(b), Math.cos(b) * Math.sin(a)],
+        c: mix(c1, c2, 0.5 + 0.5 * Math.sin(a * 3))
+      };
+    }, 64, 28);
+    return m;
+  }
+
+  // Scheibe als Deckel, y fest, Normale (0, ny, 0)
+  function addDisc(m, y, r, ny, c) {
+    addSurface(m, (u, v) => {
+      const a = u * TAU, rr = v * r;
+      return { p: [rr * Math.cos(a), y, rr * Math.sin(a)], n: [0, ny, 0], c: c };
+    }, 48, 1);
+  }
+
+  function makeCylinder(r, h, cBottom, cTop) {
+    const m = newMesh();
+    addSurface(m, (u, v) => {
+      const a = u * TAU;
+      return { p: [r * Math.cos(a), v * h, r * Math.sin(a)], n: [Math.cos(a), 0, Math.sin(a)], c: mix(cBottom, cTop, v) };
+    }, 48, 1);
+    addDisc(m, 0, r, -1, cBottom);
+    addDisc(m, h, r, 1, cTop);
+    return m;
+  }
+
+  function makeCone(r, h, cBottom, cTop) {
+    const m = newMesh();
+    const ln = Math.hypot(r, h);
+    addSurface(m, (u, v) => {
+      const a = u * TAU;
+      return {
+        p: [r * (1 - v) * Math.cos(a), v * h, r * (1 - v) * Math.sin(a)],
+        n: [h / ln * Math.cos(a), r / ln, h / ln * Math.sin(a)],
+        c: mix(cBottom, cTop, v)
+      };
+    }, 48, 8);
+    addDisc(m, 0, r, -1, cBottom);
+    return m;
+  }
+
+  function makeBox(s, c) {
+    const m = newMesh();
+    const h = s / 2;
+    // sechs Seiten, je vier eigene Vertices (Normale pro Seite)
+    const faces = [
+      { n: [1,0,0],  u: [0,0,-1], v: [0,1,0], k: 1.0 },
+      { n: [-1,0,0], u: [0,0,1],  v: [0,1,0], k: 0.9 },
+      { n: [0,1,0],  u: [1,0,0],  v: [0,0,-1], k: 1.15 },
+      { n: [0,-1,0], u: [1,0,0],  v: [0,0,1], k: 0.7 },
+      { n: [0,0,1],  u: [1,0,0],  v: [0,1,0], k: 0.95 },
+      { n: [0,0,-1], u: [-1,0,0], v: [0,1,0], k: 0.85 }
+    ];
+    for (const f of faces) {
+      const base = m.pos.length / 3;
+      const col = [c[0] * f.k, c[1] * f.k, c[2] * f.k];
+      for (const [su, sv] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
+        const p = [0, 1, 2].map(i => h * (f.n[i] + su * f.u[i] + sv * f.v[i]));
+        addVertex(m, p, f.n, col);
+      }
+      m.idx.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+    }
+    return m;
+  }
+
+  // Bodenplatte als Schachbrett aus Kacheln der Kantenlänge 1
+  function makeGround(half, cA, cB) {
+    const m = newMesh();
+    for (let i = -half; i < half; i++)
+      for (let j = -half; j < half; j++) {
+        const c = ((i + j) & 1) === 0 ? cA : cB;
+        const base = m.pos.length / 3;
+        addVertex(m, [i, 0, j], [0, 1, 0], c);
+        addVertex(m, [i + 1, 0, j], [0, 1, 0], c);
+        addVertex(m, [i, 0, j + 1], [0, 1, 0], c);
+        addVertex(m, [i + 1, 0, j + 1], [0, 1, 0], c);
+        m.idx.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
+      }
+    return m;
+  }
+
+  // ---------- GPU-Puffer ----------
+  function makeBuffer(target, data) {
+    const b = gl.createBuffer();
+    gl.bindBuffer(target, b);
+    gl.bufferData(target, data, gl.STATIC_DRAW);
+    return b;
+  }
+
+  // lädt ein Mesh auf die Grafikkarte, indexType ist gl.UNSIGNED_SHORT oder gl.UNSIGNED_INT
+  function upload(m, indexType, lineIdx) {
+    const IdxArray = indexType === gl.UNSIGNED_INT ? Uint32Array : Uint16Array;
+    const g = {
+      pos: makeBuffer(gl.ARRAY_BUFFER, new Float32Array(m.pos)),
+      nor: makeBuffer(gl.ARRAY_BUFFER, new Float32Array(m.nor)),
+      col: makeBuffer(gl.ARRAY_BUFFER, new Float32Array(m.col)),
+      idx: makeBuffer(gl.ELEMENT_ARRAY_BUFFER, new IdxArray(m.idx)),
+      count: m.idx.length,
+      type: indexType,
+      lines: null,
+      lineCount: 0
+    };
+    if (lineIdx) {
+      g.lines = makeBuffer(gl.ELEMENT_ARRAY_BUFFER, new IdxArray(lineIdx));
+      g.lineCount = lineIdx.length;
+    }
+    return g;
+  }
+
+  function freeMesh(g) {
+    if (!g) return;
+    [g.pos, g.nor, g.col, g.idx, g.lines].forEach(b => { if (b) gl.deleteBuffer(b); });
+  }
+
+  function bindAttributes(g) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.pos);
+    gl.enableVertexAttribArray(loc.aPosition);
+    gl.vertexAttribPointer(loc.aPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.nor);
+    gl.enableVertexAttribArray(loc.aNormal);
+    gl.vertexAttribPointer(loc.aNormal, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.col);
+    gl.enableVertexAttribArray(loc.aColor);
+    gl.vertexAttribPointer(loc.aColor, 3, gl.FLOAT, false, 0, 0);
+  }
+
+  // ---------- Rekursive Kugel ----------
+  const OCTA_VERTS = [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]];
+
+  // Seed: Oktaeder mit 8 Dreiecken (Eckpunkt-Indizes, von außen gegen den Uhrzeigersinn)
+  function octahedronTriangles() {
+    const t = [];
+    for (const sx of [0, 1]) for (const sy of [2, 3]) for (const sz of [4, 5]) {
+      const parity = (sx === 1) ^ (sy === 3) ^ (sz === 5);
+      if (parity) t.push([sx, sz, sy]); else t.push([sx, sy, sz]);
+    }
+    return t;
+  }
+
+  function buildSphere(depth) {
+    const verts = OCTA_VERTS.map(v => v.slice());
+    const midCache = new Map();
+    const tris = [];
+
+    // Kantenmittelpunkt auf die Einheitskugel schieben, pro Kante nur einmal anlegen
+    function midpoint(a, b) {
+      const key = Math.min(a, b) * 1048576 + Math.max(a, b);
+      let i = midCache.get(key);
+      if (i === undefined) {
+        const p = vec3.normalize([(verts[a][0] + verts[b][0]) / 2, (verts[a][1] + verts[b][1]) / 2, (verts[a][2] + verts[b][2]) / 2]);
+        i = verts.push(p) - 1;
+        midCache.set(key, i);
+      }
+      return i;
+    }
+
+    function subdivide(a, b, c, level) {
+      if (level === 0) { tris.push(a, b, c); return; }
+      const ab = midpoint(a, b), bc = midpoint(b, c), ca = midpoint(c, a);
+      subdivide(a, ab, ca, level - 1);
+      subdivide(ab, b, bc, level - 1);
+      subdivide(ca, bc, c, level - 1);
+      subdivide(ab, bc, ca, level - 1);
+    }
+
+    for (const t of octahedronTriangles()) subdivide(t[0], t[1], t[2], depth);
+
+    // Kanten ohne Duplikate für die Linien
+    const edgeSet = new Set();
+    const lineIdx = [];
+    for (let i = 0; i < tris.length; i += 3)
+      for (let k = 0; k < 3; k++) {
+        const a = tris[i + k], b = tris[i + (k + 1) % 3];
+        const key = Math.min(a, b) * 1048576 + Math.max(a, b);
+        if (!edgeSet.has(key)) { edgeSet.add(key); lineIdx.push(a, b); }
+      }
+
+    const m = newMesh();
+    for (const p of verts) addVertex(m, p, p, [0.5 + 0.5 * p[0], 0.5 + 0.5 * p[1], 0.5 + 0.5 * p[2]]);
+    m.idx = tris;
+    return { mesh: m, lineIdx: lineIdx, vertexCount: verts.length, triangleCount: tris.length / 3, edgeCount: lineIdx.length / 2 };
+  }
+
+  // ---------- Szene ----------
+  const scene = [];   // { g, model }
+  function addToScene(mesh, model) { scene.push({ g: upload(mesh, gl.UNSIGNED_SHORT), model: model }); }
+
+  const SAT = 4.8; // Abstand der Körper vom Zentrum
+  const at = (deg, y) => [SAT * Math.sin(deg * Math.PI / 180), y, SAT * Math.cos(deg * Math.PI / 180)];
+
+  addToScene(makeGround(8, [0.93, 0.9, 0.84], [0.74, 0.71, 0.66]), mat4Translate(0, GROUND_Y, 0));
+  (function () {
+    let p = at(45, GROUND_Y + 0.4);
+    addToScene(makeTorus(0.95, 0.4, [0.1, 0.62, 0.58], [0.22, 0.82, 0.7]), mat4Translate(p[0], p[1], p[2]));
+    p = at(135, GROUND_Y);
+    addToScene(makeCylinder(0.75, 2.3, [0.85, 0.5, 0.12], [0.98, 0.76, 0.3]), mat4Translate(p[0], p[1], p[2]));
+    p = at(225, GROUND_Y);
+    addToScene(makeCone(0.95, 2.7, [0.72, 0.16, 0.25], [0.95, 0.4, 0.38]), mat4Translate(p[0], p[1], p[2]));
+    p = at(315, GROUND_Y + 0.8);
+    addToScene(makeBox(1.6, [0.27, 0.5, 0.82]), mat4Multiply(mat4Translate(p[0], p[1], p[2]), mat4RotateY(0.35)));
+  })();
+
+  // Kugel in der Mitte, sitzt auf der Bodenplatte
+  const sphereModel = mat4Multiply(mat4Translate(0, GROUND_Y + SPHERE_R, 0), mat4Scale(SPHERE_R));
+  let sphereGpu = null;
+  let sphereDepth = DEPTH_START;
+
+  // ---------- Kamera ----------
+  const camera = {
+    eye: [0, CAM_HEIGHT, 12],
+    center: [0, 0, 0],
+    up: [0, 1, 0],
+    zAngle: Math.PI / 5,  // Winkel zur Z-Achse
+    distance: 12,         // Abstand zum Zentrum in der XZ-Ebene
+    height: CAM_HEIGHT
+  };
+
+  function calculateCameraOrbit() {
+    const x = 0, y = 1, z = 2;
+    camera.eye[x] = camera.center[x] + camera.distance * Math.sin(camera.zAngle);
+    camera.eye[y] = camera.height;
+    camera.eye[z] = camera.center[z] + camera.distance * Math.cos(camera.zAngle);
+  }
+
+  const projMatrix = mat4Perspective(45 * Math.PI / 180, CANVAS_W / CANVAS_H, 0.5, 60);
+
+  // ---------- Zeichnen ----------
+  let dirty = true;
+  function drawMesh(g, model, unlit) {
+    gl.uniformMatrix4fv(loc.uModel, false, new Float32Array(model));
+    bindAttributes(g);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.idx);
+    gl.drawElements(gl.TRIANGLES, g.count, g.type, 0);
+  }
+
+  function render() {
+    calculateCameraOrbit();
+    const view = mat4LookAt(camera.eye, camera.center, camera.up);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(BG[0], BG[1], BG[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+
+    gl.useProgram(prog);
+    gl.uniformMatrix4fv(loc.uView, false, new Float32Array(view));
+    gl.uniformMatrix4fv(loc.uProj, false, new Float32Array(projMatrix));
+    gl.uniform3fv(loc.uLineColor, LINE_COLOR);
+
+    gl.uniform1f(loc.uUnlit, 0);
+    for (const o of scene) drawMesh(o.g, o.model);
+
+    if (sphereGpu) {
+      // gefüllte Fläche leicht nach hinten versetzt, damit die Linien nicht durchstechen
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(1, 1);
+      drawMesh(sphereGpu, sphereModel);
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+
+      gl.uniform1f(loc.uUnlit, 1);
+      gl.uniform1f(loc.uLineAlpha, LINE_ALPHA[sphereDepth]);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.uniformMatrix4fv(loc.uModel, false, new Float32Array(sphereModel));
+      bindAttributes(sphereGpu);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereGpu.lines);
+      gl.drawElements(gl.LINES, sphereGpu.lineCount, sphereGpu.type, 0);
+      gl.disable(gl.BLEND);
+    }
+  }
+
+  // ---------- Kugel erzeugen / Tiefe ändern ----------
+  function rebuildSphere(depth) {
+    const s = buildSphere(depth);
+    const type = s.vertexCount > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+    if (type === gl.UNSIGNED_INT && !uintExt) {
+      throw new Error("Mehr als 65535 Vertices, aber OES_element_index_uint fehlt");
+    }
+    freeMesh(sphereGpu);
+    sphereGpu = upload(s.mesh, type, s.lineIdx);
+    sphereDepth = depth;
+    el("infoDepth").textContent = depth + " von " + MAX_DEPTH;
+    el("infoTris").textContent = s.triangleCount.toLocaleString("de-DE");
+    el("infoVerts").textContent = s.vertexCount.toLocaleString("de-DE");
+    el("infoIndex").textContent = type === gl.UNSIGNED_INT ? "Uint32" : "Uint16";
+    el("btnDepthDown").disabled = depth <= 0;
+    el("btnDepthUp").disabled = depth >= MAX_DEPTH;
+    dirty = true;
+  }
+
+  function changeDepth(delta) {
+    const d = sphereDepth + delta;
+    if (d < 0) { setStatus("Die Rekursionstiefe kann nicht kleiner als 0 sein (das ist der Oktaeder).", "warn"); return; }
+    if (d > MAX_DEPTH) {
+      setStatus(uintExt
+        ? "Tiefe " + MAX_DEPTH + " ist das Maximum, darüber würde die Kugel zu viele Dreiecke haben."
+        : "Tiefe " + MAX_DEPTH + " ist das Maximum, ohne OES_element_index_uint sind nur 65535 Vertices möglich.", "warn");
+      return;
+    }
+    try {
+      rebuildSphere(d);
+      setStatus("Rekursionstiefe " + d + ": " + el("infoTris").textContent + " Dreiecke.", "ready");
+    } catch (err) {
+      console.error(err);
+      setStatus("Fehler beim Erzeugen der Kugel: " + err.message, "error");
+    }
+  }
+
+  // ---------- Anzeige ----------
+  function updateCameraInfo() {
+    let deg = (camera.zAngle * 180 / Math.PI) % 360;
+    if (deg < 0) deg += 360;
+    el("infoAngle").textContent = deg.toFixed(0) + "°";
+    el("infoRadius").textContent = camera.distance.toFixed(0);
+    el("infoHeight").textContent = camera.height.toFixed(1);
+    el("btnRadiusUp").disabled = camera.distance >= RADIUS_MAX;
+    el("btnRadiusDown").disabled = camera.distance <= RADIUS_MIN;
+  }
+
+  function changeRadius(delta) {
+    const r = Math.min(RADIUS_MAX, Math.max(RADIUS_MIN, camera.distance + delta));
+    if (r === camera.distance) {
+      setStatus(delta > 0 ? "Größter Radius (" + RADIUS_MAX + ") erreicht." : "Kleinster Radius (" + RADIUS_MIN + ") erreicht, näher würde die Kamera an die Körper stoßen.", "warn");
+      return;
+    }
+    camera.distance = r;
+    setStatus("Radius der Kreisbahn: " + r + ".", "ready");
+    updateCameraInfo();
+    dirty = true;
+  }
+
+  // ---------- Interaktion ----------
+  const held = { left: false, right: false };
+  function flash(btn) {
+    btn.classList.add("is-pressed");
+    setTimeout(function () { btn.classList.remove("is-pressed"); }, 120);
+  }
+
+  window.addEventListener("keydown", function (evt) {
+    if (evt.ctrlKey || evt.metaKey || evt.altKey) return;
+    const key = (evt.key || "").toLowerCase();
+    if (key === "arrowleft" || key === "arrowright") {
+      evt.preventDefault();
+      const dir = key === "arrowright" ? "right" : "left";
+      if (!evt.repeat && !held[dir]) { camera.zAngle += (dir === "right" ? 1 : -1) * TAP_STEP; updateCameraInfo(); dirty = true; }
+      held[dir] = true;
+      el(dir === "right" ? "btnRight" : "btnLeft").classList.add("is-pressed");
+    }
+    else if (key === "n") {
+      // Gedrückthalten wiederholt die Änderung
+      if (evt.shiftKey) { flash(el("btnRadiusDown")); changeRadius(-RADIUS_STEP); }
+      else { flash(el("btnRadiusUp")); changeRadius(RADIUS_STEP); }
+    }
+  });
+  window.addEventListener("keyup", function (evt) {
+    const key = (evt.key || "").toLowerCase();
+    if (key === "arrowleft") { held.left = false; el("btnLeft").classList.remove("is-pressed"); }
+    else if (key === "arrowright") { held.right = false; el("btnRight").classList.remove("is-pressed"); }
+  });
+  window.addEventListener("blur", function () {
+    held.left = held.right = false;
+    el("btnLeft").classList.remove("is-pressed");
+    el("btnRight").classList.remove("is-pressed");
+  });
+
+  // Pfeil-Buttons: bewegen die Kamera, solange sie gedrückt sind
+  function holdButton(id, dir) {
+    const b = el(id);
+    const on = function (e) { e.preventDefault(); held[dir] = true; b.classList.add("is-pressed"); };
+    const off = function () { held[dir] = false; b.classList.remove("is-pressed"); };
+    b.addEventListener("pointerdown", on);
+    b.addEventListener("pointerup", off);
+    b.addEventListener("pointerleave", off);
+    b.addEventListener("pointercancel", off);
+    // Bedienung per Tastatur (Enter, Leertaste auf fokussiertem Button): ein Schritt
+    b.addEventListener("click", function (e) {
+      if (e.detail === 0) { camera.zAngle += (dir === "right" ? 1 : -1) * 0.1; updateCameraInfo(); dirty = true; }
+    });
+  }
+  holdButton("btnLeft", "left");
+  holdButton("btnRight", "right");
+  el("btnRadiusUp").addEventListener("click", function () { changeRadius(RADIUS_STEP); });
+  el("btnRadiusDown").addEventListener("click", function () { changeRadius(-RADIUS_STEP); });
+  el("btnDepthUp").addEventListener("click", function () { changeDepth(1); });
+  el("btnDepthDown").addEventListener("click", function () { changeDepth(-1); });
+
+  // Animationsschleife: Winkelgeschwindigkeit zeitbasiert
+  let lastTime = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+    const dir = (held.right ? 1 : 0) - (held.left ? 1 : 0);
+    if (dir !== 0) {
+      camera.zAngle += dir * ANGLE_SPEED * dt;
+      camera.zAngle %= TAU;
+      updateCameraInfo();
+      dirty = true;
+    }
+    if (dirty) { dirty = false; render(); }
+    requestAnimationFrame(loop);
+  }
+
+  // Tabelle der Anzahlen je Tiefe (Dokumentation)
+  (function () {
+    const body = document.querySelector("#countTable tbody");
+    for (let n = 0; n <= 7; n++) {
+      const f = Math.pow(4, n), v = 4 * f + 2;
+      const tr = document.createElement("tr");
+      [n, 8 * f, v, 12 * f, v > 65535 ? "Uint32" : "Uint16"].forEach(function (x) {
+        const td = document.createElement("td");
+        td.textContent = typeof x === "number" ? x.toLocaleString("de-DE") : x;
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    }
+  })();
+
+  // Start
+  try {
+    rebuildSphere(DEPTH_START);
+  } catch (err) {
+    console.error(err);
+    setStatus("Fehler beim Erzeugen der Kugel: " + err.message, "error");
+    return;
+  }
+  ["btnLeft", "btnRight", "btnRadiusUp", "btnRadiusDown"].forEach(function (id) { el(id).disabled = false; });
+  updateCameraInfo();
+  setStatus("Bereit. Mit den Pfeiltasten links und rechts kreist die Kamera, mit N bzw. Shift+N ändert sich der Radius.", "ready");
+  requestAnimationFrame(loop);
+})();
+// END EA5_KAMERABEWEGUNG
+
+// Hilfe-Popover
+document.querySelectorAll(".help").forEach(help => {
+  const btn = help.querySelector(".help-btn");
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    document.querySelectorAll(".help.is-open").forEach(h => { if (h !== help) { h.classList.remove("is-open"); h.querySelector(".help-btn").setAttribute("aria-expanded", "false"); } });
+    const open = help.classList.toggle("is-open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+});
+document.addEventListener("click", e => { if (!e.target.closest(".help")) document.querySelectorAll(".help.is-open").forEach(h => { h.classList.remove("is-open"); h.querySelector(".help-btn").setAttribute("aria-expanded", "false"); }); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".help.is-open").forEach(h => { h.classList.remove("is-open"); h.querySelector(".help-btn").setAttribute("aria-expanded", "false"); }); });
+</script>
+</body>
+</html>
